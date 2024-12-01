@@ -1,8 +1,4 @@
-// Filename: multi-bulk-send-application.cc
-
 #include "multi-bulk-send-application.h"
-
-
 
 namespace ns3
 {
@@ -12,11 +8,13 @@ NS_LOG_COMPONENT_DEFINE("MultiBulkSendApplication");
 NS_OBJECT_ENSURE_REGISTERED(MultiBulkSendApplication);
 void MultiBulkSendApplication::PacketRecievedCallback(Ptr<const Packet> packet, const Address& address)
 {
+    NS_LOG_UNCOND("Packet received: " << packet->GetSize() << " bytes");
     m_totalBytesReceived += packet->GetSize();
     if (m_totalBytesReceived >= m_bulkSendSize)
     {
         BulkSendSyncManager::GetInstance().NotifyCompletion();
-        NS_LOG_UNCOND("Bulk send complete. Total bytes received: " << m_totalBytesReceived);
+        NS_LOG_UNCOND("mbulksendSize: "<< m_bulkSendSize);
+        NS_LOG_UNCOND("Bulk send complete for step " << m_currentBulkSendIndex << " and from node " << m_node->GetId() << ". Total bytes received: " << m_totalBytesReceived << " at time " << Simulator::Now().GetSeconds());
     }
     NS_LOG_INFO("Packet received: " << packet->GetSize() << " bytes");
 }
@@ -88,7 +86,7 @@ MultiBulkSendApplication::ScheduleNextBulkSend()
         return;
     } else {
         auto [bulkSendApp, m_bulkSendSize, m_sink] = m_bulkSendSizes[m_currentBulkSendIndex];
-        NS_LOG_UNCOND("Starting bulk send #" << m_currentBulkSendIndex << "at time " << Simulator::Now().GetSeconds() << "of size " << m_bulkSendSize << " bytes.");
+        NS_LOG_UNCOND("Starting bulk send #" << m_currentBulkSendIndex << " at time " << Simulator::Now().GetSeconds() << "of size " << m_bulkSendSize << " bytes.");
         if (m_bulkSendSize == 0)
         {
             NS_LOG_UNCOND("Bulk send size is 0. Skipping.");
