@@ -7,6 +7,7 @@ set(source_files
     helper/packet-socket-helper.cc
     helper/simple-net-device-helper.cc
     helper/trace-helper.cc
+    model/bulk-send-sync-manager.cc
     model/address.cc
     model/application.cc
     model/buffer.cc
@@ -81,6 +82,7 @@ set(header_files
     helper/packet-socket-helper.h
     helper/simple-net-device-helper.h
     helper/trace-helper.h
+    model/bulk-send-sync-manager.h
     model/address.h
     model/application.h
     model/buffer.h

@@ -1,0 +1,6 @@
+#include <tuple>
+private:
+    Ptr<Socket> m_socket;
+    list<round>
+    typedef round = list<steps>
+    typdef step = std::tuple<int, int>  //bytes, destiantion
