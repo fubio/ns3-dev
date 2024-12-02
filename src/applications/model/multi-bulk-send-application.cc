@@ -47,7 +47,7 @@ void MultiBulkSendApplication::SetBulkSendSizes(const std::vector<std::tuple<Ptr
 void
 MultiBulkSendApplication::StartApplication()
 {
-    NS_LOG_UNCOND("Starting MultiBulkSendApplication");
+    NS_LOG_UNCOND("Starting MultiBulkSendApplication on Node: " << m_node->GetId());
     if (m_bulkSendSizes.empty())
     {
         NS_LOG_ERROR("BulkSendSizes vector is empty. No data to send.");
@@ -85,7 +85,11 @@ MultiBulkSendApplication::ScheduleNextBulkSend()
         NS_LOG_UNCOND("All bulk sends complete.");
         return;
     } else {
-        auto [bulkSendApp, m_bulkSendSize, m_sink] = m_bulkSendSizes[m_currentBulkSendIndex];
+        // auto [bulkSendApp, m_bulkSendSize, m_sink] = m_bulkSendSizes[m_currentBulkSendIndex];
+        // Destructure into temporary local variables with different names
+        auto [bulkSendApp, tempBulkSendSize, tempSink] = m_bulkSendSizes[m_currentBulkSendIndex];
+        // Assign to member variables explicitly
+        m_bulkSendSize = tempBulkSendSize;
         NS_LOG_UNCOND("Starting bulk send #" << m_currentBulkSendIndex << " at time " << Simulator::Now().GetSeconds() << "of size " << m_bulkSendSize << " bytes.");
         if (m_bulkSendSize == 0)
         {
@@ -93,11 +97,11 @@ MultiBulkSendApplication::ScheduleNextBulkSend()
             BulkSendSyncManager::GetInstance().NotifyCompletion();
         } else {
             bulkSendApp->SetMaxBytes(m_bulkSendSize);
-            m_sink->TraceConnectWithoutContext("Rx", MakeCallback(&MultiBulkSendApplication::PacketRecievedCallback, this));
+            tempSink->TraceConnectWithoutContext("Rx", MakeCallback(&MultiBulkSendApplication::PacketRecievedCallback, this));
             bulkSendApp->SetStartTime(Simulator::Now());
             bulkSendApp->SetStopTime(Simulator::Now() + Seconds(10));
-            m_sink->SetStartTime(Simulator::Now());
-            m_sink->SetStopTime(Simulator::Now() + Seconds(10));
+            tempSink->SetStartTime(Simulator::Now());
+            tempSink->SetStopTime(Simulator::Now() + Seconds(10));
         }
     }
     m_currentBulkSendIndex++;

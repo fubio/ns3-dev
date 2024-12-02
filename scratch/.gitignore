@@ -1,7 +1,8 @@
 # Ignore everything on scratch by default, except the provided examples
 /*
 !.gitignore
-
+!tcp-bulk-send.cc
+!test-multi-bulk-send.cc
 !nested-subdir/
 !subdir/
 !scratch-simulator.cc
