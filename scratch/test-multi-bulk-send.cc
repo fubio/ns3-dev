@@ -66,50 +66,56 @@ int main(int argc, char* argv[])
     Ptr<BulkSendApplication> bulkSendApp1 = DynamicCast<BulkSendApplication>(sourceApps.Get(0));
     Ptr<PacketSink> packetSink1 = DynamicCast<PacketSink>(sinkApps.Get(0));
     std::cout << "got past dynamic cast" << std::endl;
-    // if (!bulkSendApp1 || !packetSink1) {
-    //     std::cerr << "Casting to BulkSendApplication or PacketSink failed for Application Set 1." << std::endl;
-    //     NS_LOG_ERROR("Casting to BulkSendApplication or PacketSink failed for Application Set 1.");
-    //     return 1;
-    // }
-    // std::cout << "worked so far" << std::endl;
+    if (!bulkSendApp1 || !packetSink1) {
+        std::cerr << "Casting to BulkSendApplication or PacketSink failed for Application Set 1." << std::endl;
+        NS_LOG_ERROR("Casting to BulkSendApplication or PacketSink failed for Application Set 1.");
+        return 1;
+    }
+    std::cout << "worked so far" << std::endl;
 
     applicationsNode1.push_back(std::make_tuple(bulkSendApp1, maxBytes, packetSink1));
     applicationsNode2.push_back(std::make_tuple(nullptr, 0, nullptr));
     std::cout << "inserted into applicationsNode1" << std::endl;
     // Do the same thing but opposite
+    // port = 10; // Different port for the second application
+    // source = BulkSendHelper("ns3::TcpSocketFactory", InetSocketAddress(interfaces.GetAddress(0), port));
+    // source.SetAttribute("MaxBytes", UintegerValue(maxBytes));
+    // sourceApps = source.Install(nodes.Get(1));
+
+    // // Create the first PacketSinkApplication
+    // sink = PacketSinkHelper("ns3::TcpSocketFactory", InetSocketAddress(Ipv4Address::GetAny(), port));
+    // sinkApps = sink.Install(nodes.Get(0));
     port = 10; // Different port for the second application
-    source = BulkSendHelper("ns3::TcpSocketFactory", InetSocketAddress(interfaces.GetAddress(0), port));
-    source.SetAttribute("MaxBytes", UintegerValue(maxBytes));
-    sourceApps = source.Install(nodes.Get(1));
 
-    auto bulkSendApp2 = DynamicCast<BulkSendApplication>(sourceApps.Get(0));
-auto packetSink2 = DynamicCast<PacketSink>(sinkApps.Get(0));
+    // Create the second BulkSendApplication
+    BulkSendHelper source2("ns3::TcpSocketFactory", InetSocketAddress(interfaces.GetAddress(1), port));
+    uint32_t secondMaxBytes = 62500; // Another 2 million bytes
+    source.SetAttribute("MaxBytes", UintegerValue(secondMaxBytes));
+    ApplicationContainer sourceApps2 = source.Install(nodes.Get(0));
+    sourceApps.Start(Simulator::Now());
+    sourceApps.Stop(Simulator::Now() + Seconds(10));
 
-if (!bulkSendApp2 || !packetSink2) {
-    std::cerr << "Casting to BulkSendApplication or PacketSink failed for Application Set 2." << std::endl;
-    NS_LOG_ERROR("Casting to BulkSendApplication or PacketSink failed for Application Set 2.");
-    return 1;
-} else {
-    std::cout << "worked so far!!!" << std::endl;
-}
-    // Create the first PacketSinkApplication
-    sink = PacketSinkHelper("ns3::TcpSocketFactory", InetSocketAddress(Ipv4Address::GetAny(), port));
-    sinkApps = sink.Install(nodes.Get(0));
+    // Create the second PacketSinkApplication
+    PacketSinkHelper sink2("ns3::TcpSocketFactory", InetSocketAddress(Ipv4Address::GetAny(), port));
+    ApplicationContainer sinkApps2 = sink2.Install(nodes.Get(1));
 
-    applicationsNode2.push_back({DynamicCast<BulkSendApplication>(sourceApps.Get(0)), maxBytes, DynamicCast<PacketSink>(sinkApps.Get(0))});
-    applicationsNode1.push_back({nullptr, 0, nullptr});
+    auto bulkSendApp2 = DynamicCast<BulkSendApplication>(sourceApps2.Get(0));
+    auto packetSink2 = DynamicCast<PacketSink>(sinkApps2.Get(0));
 
-    MultiBulkSendApplication multiBulkSendAppNode1;
-    multiBulkSendAppNode1.SetBulkSendSizes(applicationsNode1);
-    nodes.Get(0)->AddApplication(&multiBulkSendAppNode1);
-    multiBulkSendAppNode1.SetStartTime(Seconds(0.0));
-    multiBulkSendAppNode1.SetStopTime(Seconds(10.0));
+    applicationsNode2.push_back(std::make_tuple(DynamicCast<BulkSendApplication>(sourceApps2.Get(0)), secondMaxBytes, DynamicCast<PacketSink>(sinkApps2.Get(0))));
+    applicationsNode1.push_back(std::make_tuple(nullptr, 0, nullptr));
 
-    MultiBulkSendApplication multiBulkSendAppNode2;
-    multiBulkSendAppNode2.SetBulkSendSizes(applicationsNode2);
-    nodes.Get(1)->AddApplication(&multiBulkSendAppNode2);
-    multiBulkSendAppNode2.SetStartTime(Seconds(0.0));
-    multiBulkSendAppNode2.SetStopTime(Seconds(10.0));
+    Ptr<MultiBulkSendApplication> multiBulkSendAppNode1 = CreateObject<MultiBulkSendApplication>();
+    multiBulkSendAppNode1->SetBulkSendSizes(applicationsNode1);
+    nodes.Get(0)->AddApplication(multiBulkSendAppNode1);
+    multiBulkSendAppNode1->SetStartTime(Seconds(0.0));
+    multiBulkSendAppNode1->SetStopTime(Seconds(10.0));
+
+    Ptr<MultiBulkSendApplication> multiBulkSendAppNode2 = CreateObject<MultiBulkSendApplication>();
+    multiBulkSendAppNode2->SetBulkSendSizes(applicationsNode2);
+    nodes.Get(1)->AddApplication(multiBulkSendAppNode2);
+    multiBulkSendAppNode2->SetStartTime(Seconds(0.0));
+    multiBulkSendAppNode2->SetStopTime(Seconds(10.0));
 
     // // Connect the callbacks
     // Ptr<BulkSendApplication> bulkSendApp = DynamicCast<BulkSendApplication>(sourceApps.Get(0));

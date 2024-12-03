@@ -43,6 +43,7 @@ class MultiBulkSendApplication : public Application
     void SetBulkSendSizes(const std::vector<std::tuple<Ptr<BulkSendApplication>, uint64_t, Ptr<PacketSink>>>& bulkSends);
 
   private:
+    void PacketSentCallback(Ptr<const Packet> packet);
     void PacketRecievedCallback(Ptr<const Packet> packet, const Address& address);
     void StartApplication() override;
     void StopApplication() override;

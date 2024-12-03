@@ -18,7 +18,7 @@ NS_LOG_COMPONENT_DEFINE("TcpBulkSendExample");
 Time firstPacketSentTime = Seconds(0);
 Time lastPacketReceivedTime = Seconds(0);
 uint64_t totalBytesSent = 0;
-uint32_t maxBytes = 2000000; // Set to 2 million bytes
+uint32_t maxBytes = 62500; // Set to 2 million bytes
 bool secondBulkSendScheduled = false;
 
 // Forward declaration of the function to start the second bulk send
@@ -39,13 +39,30 @@ void PacketSentCallback(Ptr<const Packet> packet)
     }
 }
 
-void PacketReceivedCallback(Ptr<const Packet> packet, const Address& address)
-{
-    lastPacketReceivedTime = Simulator::Now();
-    // Calculate the data transfer duration
-    Time transferDuration = lastPacketReceivedTime - firstPacketSentTime;
-    // std::cout << "Data Transfer Duration: " << transferDuration.GetSeconds() << " seconds" << std::endl;
+// Add these global variables
+static uint32_t totalBytesReceived = 0;
+static uint32_t roundsCompleted = 0;
+
+// Modify the PacketReceivedCallback function
+void PacketReceivedCallback(Ptr<const Packet> packet, const Address &address) {
+    totalBytesReceived += packet->GetSize();
+
+    // Define the byte threshold for each round
+    uint32_t bytesPerRound = 62500; // Adjust based on your application's round size
+
+    if (totalBytesReceived >= bytesPerRound * (roundsCompleted + 1)) {
+        roundsCompleted++;
+        std::cout << "After round " << roundsCompleted << ", bytes received: " << totalBytesReceived
+                  << " at time: " << Simulator::Now().GetSeconds() << " seconds." << std::endl;
+    }
 }
+// void PacketReceivedCallback(Ptr<const Packet> packet, const Address& address)
+// {
+//     lastPacketReceivedTime = Simulator::Now();
+//     // Calculate the data transfer duration
+//     Time transferDuration = lastPacketReceivedTime - firstPacketSentTime;
+//     // std::cout << "Data Transfer Duration: " << transferDuration.GetSeconds() << " seconds" << std::endl;
+// }
 
 NodeContainer nodes;
 Ipv4InterfaceContainer interfaces;
@@ -79,6 +96,7 @@ void StartSecondBulkSend()
 int main(int argc, char* argv[])
 {
     bool tracing = false;
+    // u_int32_t maxBytes = 62500; // Set to 62,500 bytes
 
     // Allow the user to override defaults via command-line arguments
     CommandLine cmd(__FILE__);
@@ -150,7 +168,7 @@ int main(int argc, char* argv[])
     // Output statistics
     Ptr<PacketSink> sink1 = DynamicCast<PacketSink>(sinkApps.Get(0));
     std::cout << "Total Bytes Received: " << sink1->GetTotalRx() << std::endl;
-    // std::cout << "Total time: " << time
+    std::cout << "Total time: " << lastPacketReceivedTime.GetSeconds() << " seconds" << std::endl;
 
     return 0;
 }
