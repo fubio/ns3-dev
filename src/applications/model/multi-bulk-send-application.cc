@@ -10,11 +10,11 @@ NS_OBJECT_ENSURE_REGISTERED(MultiBulkSendApplication);
 
 void MultiBulkSendApplication::PacketSentCallback(Ptr<const Packet> packet)
 {
-    NS_LOG_UNCOND("Packet sent at " << Simulator::Now().GetSeconds() << "s, Size: " << packet->GetSize() << " bytes. From Node: " << m_node->GetId());
+    // NS_LOG_UNCOND("Packet sent at " << Simulator::Now().GetSeconds() << "s, Size: " << packet->GetSize() << " bytes. From Node: " << m_node->GetId());
 }
 void MultiBulkSendApplication::PacketRecievedCallback(Ptr<const Packet> packet, const Address& address)
 {
-    NS_LOG_UNCOND("Packet received: " << packet->GetSize() << " bytes. Sent from Node" << m_node->GetId());
+    // NS_LOG_UNCOND("Packet received: " << packet->GetSize() << " bytes. Sent from Node" << m_node->GetId());
     m_totalBytesReceived += packet->GetSize();
     if (m_totalBytesReceived >= m_bulkSendSize)
     {
@@ -89,7 +89,7 @@ MultiBulkSendApplication::ScheduleNextBulkSend()
     if (m_currentBulkSendIndex >= m_bulkSendSizes.size())
     {
         NS_LOG_UNCOND("All bulk sends complete.");
-        return;
+        Simulator::Stop();
     } else {
         // auto [bulkSendApp, m_bulkSendSize, m_sink] = m_bulkSendSizes[m_currentBulkSendIndex];
         // Destructure into temporary local variables with different names

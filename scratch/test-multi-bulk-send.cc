@@ -88,16 +88,16 @@ int main(int argc, char* argv[])
     port = 10; // Different port for the second application
 
     // Create the second BulkSendApplication
-    BulkSendHelper source2("ns3::TcpSocketFactory", InetSocketAddress(interfaces.GetAddress(1), port));
+    BulkSendHelper source2("ns3::TcpSocketFactory", InetSocketAddress(interfaces.GetAddress(0), port));
     uint32_t secondMaxBytes = 62500; // Another 2 million bytes
     source.SetAttribute("MaxBytes", UintegerValue(secondMaxBytes));
-    ApplicationContainer sourceApps2 = source.Install(nodes.Get(0));
+    ApplicationContainer sourceApps2 = source2.Install(nodes.Get(1));
     sourceApps.Start(Simulator::Now());
     sourceApps.Stop(Simulator::Now() + Seconds(10));
 
     // Create the second PacketSinkApplication
     PacketSinkHelper sink2("ns3::TcpSocketFactory", InetSocketAddress(Ipv4Address::GetAny(), port));
-    ApplicationContainer sinkApps2 = sink2.Install(nodes.Get(1));
+    ApplicationContainer sinkApps2 = sink2.Install(nodes.Get(0));
 
     auto bulkSendApp2 = DynamicCast<BulkSendApplication>(sourceApps2.Get(0));
     auto packetSink2 = DynamicCast<PacketSink>(sinkApps2.Get(0));
