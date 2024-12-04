@@ -5,5 +5,7 @@
 !test-multi-bulk-send.cc
 !nested-subdir/
 !subdir/
+!test.json
+!sccl-sim.cc
 !scratch-simulator.cc
 !CMakeLists.txt

@@ -1,0 +1,76 @@
+{
+    "msccl_type": "algorithm",
+    "name": "Broadcast(n=8,root=1)-DGX1-steps=2",
+    "instance": {
+      "msccl_type": "instance",
+      "steps": 2,
+      "extra_rounds": 0,
+      "chunks": 1,
+      "pipeline": null,
+      "extra_memory": null,
+      "allow_exchange": false
+    },
+    "input_map": { "1": [0] },
+    "output_map": {
+      "0": [0],
+      "1": [0],
+      "2": [0],
+      "3": [0],
+      "4": [0],
+      "5": [0],
+      "6": [0],
+      "7": [0]
+    },
+    "steps": [
+      {
+        "msccl_type": "step",
+        "rounds": 1,
+        "sends": [
+          [0, 1, 0],
+          [0, 1, 2],
+          [0, 1, 5]
+        ]
+      },
+      {
+        "msccl_type": "step",
+        "rounds": 1,
+        "sends": [
+          [0, 1, 3],
+          [0, 2, 6],
+          [0, 5, 4],
+          [0, 5, 7]
+        ]
+      }
+    ],
+    "collective": {
+      "msccl_type": "collective",
+      "name": "Broadcast(n=8,root=1)",
+      "nodes": 8,
+      "chunks": [
+        {
+          "msccl_type": "chunk",
+          "pre": [1],
+          "post": [0, 1, 2, 3, 4, 5, 6, 7],
+          "addr": 0
+        }
+      ],
+      "triggers": {},
+      "runtime_name": "custom"
+    },
+    "topology": {
+      "msccl_type": "topology",
+      "name": "DGX1",
+      "switches": [],
+      "links": [
+        [0, 2, 1, 1, 2, 0, 0, 0],
+        [2, 0, 1, 2, 0, 1, 0, 0],
+        [1, 1, 0, 2, 0, 0, 2, 0],
+        [1, 2, 2, 0, 0, 0, 0, 1],
+        [2, 0, 0, 0, 0, 2, 1, 1],
+        [0, 1, 0, 0, 2, 0, 1, 2],
+        [0, 0, 2, 0, 1, 1, 0, 2],
+        [0, 0, 0, 1, 1, 2, 2, 0]
+      ]
+    }
+  }
+  

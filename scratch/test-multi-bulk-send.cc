@@ -105,6 +105,20 @@ int main(int argc, char* argv[])
     applicationsNode2.push_back(std::make_tuple(DynamicCast<BulkSendApplication>(sourceApps2.Get(0)), secondMaxBytes, DynamicCast<PacketSink>(sinkApps2.Get(0))));
     applicationsNode1.push_back(std::make_tuple(nullptr, 0, nullptr));
 
+        uint16_t port3 = 11;
+    BulkSendHelper source3("ns3::TcpSocketFactory", InetSocketAddress(interfaces.GetAddress(1), port3));
+    source.SetAttribute("MaxBytes", UintegerValue(maxBytes));
+    ApplicationContainer sourceApps3 = source3.Install(nodes.Get(0));
+
+    // Create the first PacketSinkApplication
+    PacketSinkHelper sink3("ns3::TcpSocketFactory", InetSocketAddress(Ipv4Address::GetAny(), port3));
+    ApplicationContainer sinkApps3 = sink3.Install(nodes.Get(1));
+        Ptr<BulkSendApplication> bulkSendApp3 = DynamicCast<BulkSendApplication>(sourceApps.Get(0));
+    Ptr<PacketSink> packetSink3 = DynamicCast<PacketSink>(sinkApps3.Get(0));
+
+    applicationsNode1.push_back(std::make_tuple(bulkSendApp3, maxBytes, packetSink3));
+    applicationsNode2.push_back(std::make_tuple(nullptr, 0, nullptr));
+
     Ptr<MultiBulkSendApplication> multiBulkSendAppNode1 = CreateObject<MultiBulkSendApplication>();
     multiBulkSendAppNode1->SetBulkSendSizes(applicationsNode1);
     nodes.Get(0)->AddApplication(multiBulkSendAppNode1);

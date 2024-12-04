@@ -28,6 +28,7 @@ build_lib(
     model/udp-server.cc
     model/udp-trace-client.cc
   HEADER_FILES
+    model/nlohmann/json.hpp
     helper/bulk-send-helper.h
     helper/on-off-helper.h
     helper/packet-sink-helper.h

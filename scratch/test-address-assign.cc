@@ -28,7 +28,7 @@ int main() {
 
   // Step 4: Assign IP Addresses
   Ipv4AddressHelper address;
-  address.SetBase("192.168.1.0", "255.255.255.0");
+  address.SetBase("192.168.0.0", "255.255.255.0");
   Ipv4InterfaceContainer interfacesAB = address.Assign(devicesAB);
 
   address.SetBase("192.168.2.0", "255.255.255.0");

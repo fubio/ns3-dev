@@ -70,18 +70,6 @@ void MultiBulkSendApplication::StopApplication()
     NS_LOG_FUNCTION(this);
 }
 
-// void
-// MultiBulkSendApplication::SendData()
-// {
-//     BulkSendApplication::SendData();
-
-//     // Check if the current bulk send is complete
-//     if (m_totBytes >= m_maxBytes)
-//     {
-//         ScheduleNextBulkSend();
-//     }
-// }
-
 void
 MultiBulkSendApplication::ScheduleNextBulkSend()
 {

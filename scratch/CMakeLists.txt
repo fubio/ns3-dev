@@ -1,5 +1,5 @@
 set(target_prefix scratch_)
-
+include_directories(/opt/homebrew/Cellar/nlohmann-json/3.11.3)
 function(create_scratch source_files)
   # Return early if no sources in the subdirectory
   list(LENGTH source_files number_sources)
