@@ -54,8 +54,8 @@ main(int argc, char* argv[])
     }
 
     // Create vector with tuples which contains the applications and send sizes at each step
-    std::vector<std::vector<std::vector<std::tuple<Ptr<BulkSendApplication>, uint64_t, Ptr<PacketSink>>>>>
-        applicationArr(maxNodes, std::vector<std::vector<std::tuple<Ptr<BulkSendApplication>, uint64_t, Ptr<PacketSink>>>>(maxSteps, std::vector<std::tuple<Ptr<BulkSendApplication>, uint64_t, Ptr<PacketSink>>>(maxSendsPerStep)));
+    std::vector<std::vector<std::vector<std::tuple<Ptr<BulkSendApplication>, uint64_t, Ptr<PacketSink>, uint64_t>>>>
+        applicationArr(maxNodes, std::vector<std::vector<std::tuple<Ptr<BulkSendApplication>, uint64_t, Ptr<PacketSink>, uint64_t>>>(maxSteps, std::vector<std::tuple<Ptr<BulkSendApplication>, uint64_t, Ptr<PacketSink>, uint64_t>>(maxSendsPerStep)));
     std::cout << "Topology name: " << topologyName << std::endl;
     // Create point-to-point link
     PointToPointHelper pointToPoint;
@@ -145,10 +145,6 @@ main(int argc, char* argv[])
                 {
                     std::cout << " getting src: " << src << " dest " << dest << " i/k " << i <<" sending bytes: " <<dataToSend[i] << std::endl;
                     auto [devices, interfaces] = devicesArr[src][dest][i];
-                    if (interfaces.GetN() == 0) {
-                        std::cerr << "interfaces is null" << std::endl;
-                        return 1;
-                    }
                     BulkSendHelper source("ns3::TcpSocketFactory",
                                           InetSocketAddress(interfaces.GetAddress(1), port));
                     ApplicationContainer sourceApps = source.Install(nodes.Get(src));
@@ -160,19 +156,39 @@ main(int argc, char* argv[])
                         DynamicCast<BulkSendApplication>(sourceApps.Get(0));
                     Ptr<PacketSink> packetSink = DynamicCast<PacketSink>(sinkApps.Get(0));
                     applicationArr[src][stepNum][sendNum] =
-                        std::make_tuple(bulkSendApp, dataToSend[i], packetSink);
+                        std::make_tuple(bulkSendApp, dataToSend[i], packetSink, dest);
                     port++;
     
                 }
+                sendNum++;
             }
 
             // std::cout << "source: " << std::get<0>(key) << " dest: " << std::get<1>(key)
             //           << " count: " << value << std::endl;
-            sendNum++;
+            
         }
         sendNum = 0;
         stepNum++;
     }
+    BulkSendSyncManager::GetInstance().SetTotalNodes(numNodes);
+    for (int i = 0; i < numNodes; i++) {
+            Ptr<MultiBulkSendApplication> multiBulkSendAppNode = CreateObject<MultiBulkSendApplication>();
+            multiBulkSendAppNode->SetBulkSendSizes(applicationArr[i]);
+            multiBulkSendAppNode->SetSteps(steps.size());
+            nodes.Get(i)->AddApplication(multiBulkSendAppNode);
+            multiBulkSendAppNode->SetStartTime(Seconds(0.0));
+            multiBulkSendAppNode->SetStopTime(Seconds(10.0));
+    }
 
+    for (int j = 0;j < 5; j++) {
+        for(int i = 0; i < 5; i++) {
+            auto [bulkSendApp, tempBulkSendSize, tempSink, destNode] = applicationArr[1][j][i];
+            std::cout << "bulkSendSize: " << tempBulkSendSize << " destNode: " << destNode << std::endl;
+        }
+    }
+    Simulator::Stop(Seconds(20)); // Extend simulation time
+    Simulator::Run();
+    Simulator::Destroy();
+    NS_LOG_INFO("Done.");
     return 0;
 }

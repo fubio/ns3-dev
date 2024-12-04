@@ -34,8 +34,8 @@ void BulkSendSyncManager::SetTotalNodes(uint32_t total)
 void BulkSendSyncManager::RegisterNode(std::function<void()> sendCallback)
 {
     m_sendCallbacks.push_back(sendCallback);
-    m_totalNodes += 1;
-    NS_LOG_UNCOND("have " << m_totalNodes << " nodes registered");
+    // m_totalNodes += 1;
+    // NS_LOG_UNCOND("have " << m_totalNodes << " nodes registered");
 }
 
 void BulkSendSyncManager::NotifyCompletion()

@@ -40,8 +40,8 @@ class MultiBulkSendApplication : public Application
     MultiBulkSendApplication();
     virtual ~MultiBulkSendApplication();
 
-    void SetBulkSendSizes(const std::vector<std::tuple<Ptr<BulkSendApplication>, uint64_t, Ptr<PacketSink>>>& bulkSends);
-
+    void SetBulkSendSizes(const std::vector<std::vector<std::tuple<Ptr<BulkSendApplication>, uint64_t, Ptr<PacketSink>, uint64_t>>>& bulkSends);
+    void SetSteps(uint64_t steps);
   private:
     void PacketSentCallback(Ptr<const Packet> packet);
     void PacketRecievedCallback(Ptr<const Packet> packet, const Address& address);
@@ -49,10 +49,11 @@ class MultiBulkSendApplication : public Application
     void StopApplication() override;
     void ScheduleNextBulkSend();
     //each elment in the vector is a step, in each bucket we have the size of the bulksend and the bulksend application
-    std::vector<std::tuple<Ptr<BulkSendApplication>, uint64_t, Ptr<PacketSink>>> m_bulkSendSizes;
+    std::vector<std::vector<std::tuple<Ptr<BulkSendApplication>, uint64_t, Ptr<PacketSink>, u_int64_t>>> m_bulkSends;
     size_t m_currentBulkSendIndex;
     uint64_t m_totalBytesReceived;
     uint64_t m_bulkSendSize;
+    uint64_t m_steps;
 };
 
 } // namespace ns3
