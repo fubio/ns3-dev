@@ -54,9 +54,9 @@ main(int argc, char* argv[])
     }
 
     // Create vector with tuples which contains the applications and send sizes at each step
-    std::tuple<Ptr<BulkSendApplication>, uint64_t, Ptr<PacketSink>> applicationArr[maxNodes][maxSteps]
-                                                                                     [maxSendsPerStep];
-
+    std::vector<std::vector<std::vector<std::tuple<Ptr<BulkSendApplication>, uint64_t, Ptr<PacketSink>>>>>
+        applicationArr(maxNodes, std::vector<std::vector<std::tuple<Ptr<BulkSendApplication>, uint64_t, Ptr<PacketSink>>>>(maxSteps, std::vector<std::tuple<Ptr<BulkSendApplication>, uint64_t, Ptr<PacketSink>>>(maxSendsPerStep)));
+    std::cout << "Topology name: " << topologyName << std::endl;
     // Create point-to-point link
     PointToPointHelper pointToPoint;
     pointToPoint.SetDeviceAttribute("DataRate", StringValue(dataRate));
@@ -83,7 +83,6 @@ main(int argc, char* argv[])
         int j = 0;
         for (int numConnection : top)
         {
-            // Don't create duplicate connections or connections to itself
             for (int k = 0; k < numConnection; k++)
             {
                 auto devices = pointToPoint.Install(nodes.Get(i), nodes.Get(j));
@@ -100,61 +99,78 @@ main(int argc, char* argv[])
     int stepNum = 0;
     for (auto step : steps)
     {
+        std::cout << "stepNum: " << stepNum << std::endl;
         int rounds = step.at("rounds").get<int>();
         auto sends = step.at("sends");
-        int sendCountArr[maxNodes][maxNodes];
+        int sendCountArr[maxNodes][maxNodes] = {0};
         for (auto send : sends)
         {
             // Get the source and destination of the send
-            int source = send[1].get<int>();
+            std::cout << "getting source and dest" << send << std::endl;
+            int src = send[1].get<int>();
             int dest = send[2].get<int>();
-            sendCountArr[source][dest]++;
+            sendCountArr[src][dest]++;
 
-            std::cout << "source: " << source << " dest: " << dest << std::endl;
+            std::cout << "source: " << src << " dest: " << dest << std::endl;
+            std::cout << "arr[0][0]" << sendCountArr[0][0] << std::endl;
         }
         int sendNum = 0;
-        for (auto [key, count] : sendCountMap)
+        for (int src = 0; src < numNodes; src++)
         {
-            auto [sourceNode, dest] = key;
-            // auto p2pList = devicesArr[sourceNode][dest];
-            auto numLinks = topology[sourceNode][dest].get<int>();
-            if (static_cast<float>(count) / static_cast<float>(numLinks) >
-                static_cast<float>(rounds))
+            for (int dest = 0; dest < numNodes; dest++)
             {
-                std::cerr << "Number of sends per round exceeds number of links availible per round"
-                          << std::endl;
-                return 1;
-            }
-            uint32_t dataToSend[maxLinksPerNodes];
-            for (int i = 0; i < std::min(numLinks, count) && count > 0; i++)
-            {
-                dataToSend[i] += dataSize;
-                count -= numLinks;
-            }
-            for (int i = 0; i < numLinks; i++)
-            {
-                auto [devices, interfaces] = devicesArr[sourceNode][dest][i];
-                BulkSendHelper source("ns3::TcpSocketFactory",
-                                      InetSocketAddress(interfaces.GetAddress(j), port));
-                ApplicationContainer sourceApps = source.Install(nodes.Get(i));
-
-                // Create the first PacketSinkApplication
-                PacketSinkHelper sink("ns3::TcpSocketFactory",
-                                       InetSocketAddress(Ipv4Address::GetAny(), port));
-                ApplicationContainer sinkApps = sink.Install(nodes.Get(j));
-                Ptr<BulkSendApplication> bulkSendApp =
-                    DynamicCast<BulkSendApplication>(sourceApps.Get(0));
-                Ptr<PacketSink> packetSink = DynamicCast<PacketSink>(sinkApps.Get(0));
-                applicationArr[sourceNode][stepNum][sendNum] = std::make_tuple(bulkSendApp, dataToSend[i],
-                                                                  packetSink);
-                port++;
-                
+                auto count = sendCountArr[src][dest];
+                if (count == 0)
+                {
+                    continue;
+                }
+                std::cout << "getting src: " << src << " dest: " << dest << std::endl;
+                auto numLinks = topology[src][dest].get<int>();
+                std::cout << "numLinks: " << numLinks << std::endl;
+                if (count != 0 && static_cast<float>(count) / static_cast<float>(numLinks) >
+                    static_cast<float>(rounds))
+                {
+                    std::cerr
+                        << "Number of sends per round exceeds number of links availible per round, on count " << count << " source: " << src << " dest: " << dest << "with links: " << numLinks
+                        << std::endl;
+                    return 1;
+                }
+                uint32_t dataToSend[maxLinksPerNodes] = {0};
+                for (int i = 0; i < std::min(numLinks, count) && count > 0; i++)
+                {
+                    dataToSend[i] += dataSize;
+                    count -= numLinks;
+                }
+                for (int i = 0; i < numLinks; i++)
+                {
+                    std::cout << " getting src: " << src << " dest " << dest << " i/k " << i <<" sending bytes: " <<dataToSend[i] << std::endl;
+                    auto [devices, interfaces] = devicesArr[src][dest][i];
+                    if (interfaces.GetN() == 0) {
+                        std::cerr << "interfaces is null" << std::endl;
+                        return 1;
+                    }
+                    BulkSendHelper source("ns3::TcpSocketFactory",
+                                          InetSocketAddress(interfaces.GetAddress(1), port));
+                    ApplicationContainer sourceApps = source.Install(nodes.Get(src));
+                    // Create the first PacketSinkApplication
+                    PacketSinkHelper sink("ns3::TcpSocketFactory",
+                                          InetSocketAddress(Ipv4Address::GetAny(), port));
+                    ApplicationContainer sinkApps = sink.Install(nodes.Get(dest));
+                    Ptr<BulkSendApplication> bulkSendApp =
+                        DynamicCast<BulkSendApplication>(sourceApps.Get(0));
+                    Ptr<PacketSink> packetSink = DynamicCast<PacketSink>(sinkApps.Get(0));
+                    applicationArr[src][stepNum][sendNum] =
+                        std::make_tuple(bulkSendApp, dataToSend[i], packetSink);
+                    port++;
+    
+                }
             }
 
             // std::cout << "source: " << std::get<0>(key) << " dest: " << std::get<1>(key)
             //           << " count: " << value << std::endl;
             sendNum++;
         }
+        sendNum = 0;
         stepNum++;
     }
 
