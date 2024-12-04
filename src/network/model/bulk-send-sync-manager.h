@@ -11,7 +11,7 @@ class BulkSendSyncManager
 {
 public:
     static BulkSendSyncManager& GetInstance();
-
+    void SetRounds(std::vector<u_int32_t> rounds);
     void RegisterNode(std::function<void()> sendCallback);
     void SetTotalNodes(uint32_t total);
     void NotifyCompletion();
@@ -25,6 +25,8 @@ private:
     uint32_t m_totalNodes;
     uint32_t m_completedNodes;
     std::vector<std::function<void()>> m_sendCallbacks;
+    std::vector<u_int32_t> m_rounds;
+    u_int32_t m_currentRound;
 };
 
 } // namespace ns3

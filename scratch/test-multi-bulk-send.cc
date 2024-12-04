@@ -55,7 +55,7 @@ int main(int argc, char* argv[])
     // Create the first BulkSendApplication
     uint16_t port = 9;
     BulkSendHelper source("ns3::TcpSocketFactory", InetSocketAddress(interfaces.GetAddress(1), port));
-    source.SetAttribute("MaxBytes", UintegerValue(maxBytes));
+    // source.SetAttribute("MaxBytes", UintegerValue(maxBytes));
     ApplicationContainer sourceApps = source.Install(nodes.Get(0));
 
     // Create the first PacketSinkApplication
@@ -85,7 +85,7 @@ int main(int argc, char* argv[])
     // // Create the first PacketSinkApplication
     // sink = PacketSinkHelper("ns3::TcpSocketFactory", InetSocketAddress(Ipv4Address::GetAny(), port));
     // sinkApps = sink.Install(nodes.Get(0));
-    port = 10; // Different port for the second application
+    port = 9; // Different port for the second application
 
     // Create the second BulkSendApplication
     BulkSendHelper source2("ns3::TcpSocketFactory", InetSocketAddress(interfaces.GetAddress(0), port));
@@ -105,7 +105,7 @@ int main(int argc, char* argv[])
     applicationsNode2.push_back(std::make_tuple(DynamicCast<BulkSendApplication>(sourceApps2.Get(0)), secondMaxBytes, DynamicCast<PacketSink>(sinkApps2.Get(0))));
     applicationsNode1.push_back(std::make_tuple(nullptr, 0, nullptr));
 
-        uint16_t port3 = 11;
+        uint16_t port3 = 10;
     BulkSendHelper source3("ns3::TcpSocketFactory", InetSocketAddress(interfaces.GetAddress(1), port3));
     source.SetAttribute("MaxBytes", UintegerValue(maxBytes));
     ApplicationContainer sourceApps3 = source3.Install(nodes.Get(0));

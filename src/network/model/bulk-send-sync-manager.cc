@@ -21,6 +21,10 @@ BulkSendSyncManager::~BulkSendSyncManager()
 {
 }
 
+void  BulkSendSyncManager::SetRounds(std::vector<u_int32_t> rounds) {
+    m_rounds = rounds;
+}
+
 void BulkSendSyncManager::SetTotalNodes(uint32_t total)
 {
     m_totalNodes = total;
