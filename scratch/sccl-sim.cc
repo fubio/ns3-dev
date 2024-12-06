@@ -102,7 +102,7 @@ main(int argc, char* argv[])
         std::cout << "stepNum: " << stepNum << std::endl;
         int rounds = step.at("rounds").get<int>();
         auto sends = step.at("sends");
-        int sendCountArr[maxNodes][maxNodes] = {0};
+        int sendCountArr[maxNodes][maxNodes] = {{0}};
         for (auto send : sends)
         {
             // Get the source and destination of the send
