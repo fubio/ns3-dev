@@ -12,6 +12,9 @@ using json = nlohmann::json;
 
 using namespace ns3;
 
+typedef std::tuple<Ptr<BulkSendApplication>, uint64_t, Ptr<PacketSink>, uint64_t> ApplicationTuple;
+typedef std::vector<std::vector<std::vector<ApplicationTuple>>> ApplicationArr;
+
 NS_LOG_COMPONENT_DEFINE("ScclSim");
 
 NodeContainer nodes;
@@ -54,8 +57,12 @@ main(int argc, char* argv[])
     }
 
     // Create vector with tuples which contains the applications and send sizes at each step
-    std::vector<std::vector<std::vector<std::tuple<Ptr<BulkSendApplication>, uint64_t, Ptr<PacketSink>, uint64_t>>>>
-        applicationArr(maxNodes, std::vector<std::vector<std::tuple<Ptr<BulkSendApplication>, uint64_t, Ptr<PacketSink>, uint64_t>>>(maxSteps, std::vector<std::tuple<Ptr<BulkSendApplication>, uint64_t, Ptr<PacketSink>, uint64_t>>(maxSendsPerStep)));
+    ApplicationArr applicationArr;
+    // Resize the vector to hold the number of nodes and steps
+    applicationArr.resize(numNodes);
+    for (int i = 0; i < numNodes; i++) {
+        applicationArr[i].resize(steps.size());
+    }
     std::cout << "Topology name: " << topologyName << std::endl;
     // Create point-to-point link
     PointToPointHelper pointToPoint;
@@ -99,34 +106,47 @@ main(int argc, char* argv[])
     int stepNum = 0;
     for (auto step : steps)
     {
-        std::cout << "stepNum: " << stepNum << std::endl;
+        // std::cout << "stepNum: " << stepNum << std::endl;
         int rounds = step.at("rounds").get<int>();
         auto sends = step.at("sends");
-        int sendCountArr[maxNodes][maxNodes] = {{0}};
+        std::vector<std::vector<int>> sendCountArr(numNodes, std::vector<int>(numNodes, 0));
         for (auto send : sends)
         {
             // Get the source and destination of the send
-            std::cout << "getting source and dest" << send << std::endl;
+            // std::cout << "getting source and dest" << send << std::endl;
             int src = send[1].get<int>();
             int dest = send[2].get<int>();
             sendCountArr[src][dest]++;
-
-            std::cout << "source: " << src << " dest: " << dest << std::endl;
-            std::cout << "arr[0][0]" << sendCountArr[0][0] << std::endl;
         }
         int sendNum = 0;
         for (int src = 0; src < numNodes; src++)
         {
+            int totalSend = 0;
+            for (int i = 0; i < numNodes; i++)
+            {
+                totalSend += sendCountArr[src][i];
+            }
+            // std::cout<< "step: " << stepNum << " src: " << src << " totalSend: " << totalSend << std::endl;
+            // If nothing is sent from this source, skip to the next source
+            if (totalSend == 0)
+            {
+                continue;
+            }
+            applicationArr[src][stepNum].resize(totalSend);
+            // std::cout << "applicationArr[" << src << "][" << stepNum << "] size: " << applicationArr[src][stepNum].size() << std::endl;
+
             for (int dest = 0; dest < numNodes; dest++)
             {
                 auto count = sendCountArr[src][dest];
+                // std::cout << "src: " << src << " dest: " << dest << "count: " << count << std::endl;
                 if (count == 0)
                 {
+                    // std::cout << "count is 0 jumping to top" << std::endl;
                     continue;
                 }
-                std::cout << "getting src: " << src << " dest: " << dest << std::endl;
+                // std::cout << "getting src: " << src << " dest: " << dest << std::endl;
                 auto numLinks = topology[src][dest].get<int>();
-                std::cout << "numLinks: " << numLinks << std::endl;
+                // std::cout << "numLinks: " << numLinks << std::endl;
                 if (count != 0 && static_cast<float>(count) / static_cast<float>(numLinks) >
                     static_cast<float>(rounds))
                 {
@@ -135,15 +155,32 @@ main(int argc, char* argv[])
                         << std::endl;
                     return 1;
                 }
-                uint32_t dataToSend[maxLinksPerNodes] = {0};
-                for (int i = 0; i < std::min(numLinks, count) && count > 0; i++)
-                {
-                    dataToSend[i] += dataSize;
-                    count -= numLinks;
-                }
+                // uint32_t dataToSend[maxLinksPerNodes] = {0};
+                //dataToSend[i] is the number of bytes to send on link i
+                std::vector<u_int32_t> dataToSend(numLinks, 0);
+                //We know that if we have a sends and b links we will send floor(a/b) bytes on each link
+                // plus the remainder on the first a%b links
                 for (int i = 0; i < numLinks; i++)
                 {
-                    std::cout << " getting src: " << src << " dest " << dest << " i/k " << i <<" sending bytes: " <<dataToSend[i] << std::endl;
+                    dataToSend[i] += dataSize*(count/numLinks);
+                }
+                // Sending remainder on first a%b links
+                for (int i = 0; i < count % numLinks; i++)
+                {
+                    dataToSend[i] += dataSize;
+                }
+                // Assign application for each link
+                for (int i = 0; i < numLinks; i++)
+                {
+                    if (sendNum == 4)
+                    {
+                        std::cout << "src: " << src << " dest: " << dest << " i: " << i << " dataToSend: " << dataToSend[i] << std::endl;
+                    }
+                    if (dataToSend[i] == 0)
+                    {
+                        continue;
+                    }
+                    // std::cout << " getting src: " << src << " dest " << dest << " i/k " << i <<" sending bytes: " <<dataToSend[i] << std::endl;
                     auto [devices, interfaces] = devicesArr[src][dest][i];
                     BulkSendHelper source("ns3::TcpSocketFactory",
                                           InetSocketAddress(interfaces.GetAddress(1), port));
@@ -155,19 +192,24 @@ main(int argc, char* argv[])
                     Ptr<BulkSendApplication> bulkSendApp =
                         DynamicCast<BulkSendApplication>(sourceApps.Get(0));
                     Ptr<PacketSink> packetSink = DynamicCast<PacketSink>(sinkApps.Get(0));
+                    // std::cout << "abt to access applicationArr:[" << src << "][" << stepNum << "][" << sendNum << "]" << std::endl;
                     applicationArr[src][stepNum][sendNum] =
                         std::make_tuple(bulkSendApp, dataToSend[i], packetSink, dest);
+                    // std::cout << "finished accessing applicationArr" << std::endl;
                     port++;
+                    // After we have sent for a link we need to increment the sendNum
+                    sendNum++;
     
                 }
-                sendNum++;
+                
             }
-
+            // Reset sendNum for the next source (after we have sent for all destinations of previous src)
+            sendNum = 0;
             // std::cout << "source: " << std::get<0>(key) << " dest: " << std::get<1>(key)
             //           << " count: " << value << std::endl;
             
         }
-        sendNum = 0;
+        //After we finish all sends for a soruce increase step num
         stepNum++;
     }
     BulkSendSyncManager::GetInstance().SetTotalNodes(numNodes);
@@ -180,10 +222,12 @@ main(int argc, char* argv[])
             multiBulkSendAppNode->SetStopTime(Seconds(10.0));
     }
 
-    for (int j = 0;j < 5; j++) {
-        for(int i = 0; i < 5; i++) {
-            auto [bulkSendApp, tempBulkSendSize, tempSink, destNode] = applicationArr[1][j][i];
-            std::cout << "bulkSendSize: " << tempBulkSendSize << " destNode: " << destNode << std::endl;
+    for (int k = 0; k < applicationArr.size(); k++) {
+        for (int j = 0;j < applicationArr[k].size(); j++) {
+            for(int i = 0; i < applicationArr[k][j].size(); i++) {
+                auto [bulkSendApp, tempBulkSendSize, tempSink, destNode] = applicationArr[k][j][i];
+                std::cout <<  "src: " << k << " bulkSendSize: " << tempBulkSendSize << " step: " << j << " send: " << i << " destNode: " << destNode << std::endl;
+            }
         }
     }
     Simulator::Stop(Seconds(20)); // Extend simulation time
