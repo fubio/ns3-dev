@@ -127,9 +127,11 @@ main(int argc, char* argv[])
                 totalSend += sendCountArr[src][i];
             }
             // std::cout<< "step: " << stepNum << " src: " << src << " totalSend: " << totalSend << std::endl;
-            // If nothing is sent from this source, skip to the next source
+            // If nothing is sent from this source, skip to the next source but first we need to add a null send
             if (totalSend == 0)
             {
+                applicationArr[src][stepNum].resize(1);
+                applicationArr[src][stepNum][0] = std::make_tuple(nullptr, 0, nullptr, 0);
                 continue;
             }
             applicationArr[src][stepNum].resize(totalSend);
@@ -172,10 +174,6 @@ main(int argc, char* argv[])
                 // Assign application for each link
                 for (int i = 0; i < numLinks; i++)
                 {
-                    if (sendNum == 4)
-                    {
-                        std::cout << "src: " << src << " dest: " << dest << " i: " << i << " dataToSend: " << dataToSend[i] << std::endl;
-                    }
                     if (dataToSend[i] == 0)
                     {
                         continue;
