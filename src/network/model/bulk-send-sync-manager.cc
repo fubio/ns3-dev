@@ -38,11 +38,11 @@ void BulkSendSyncManager::RegisterNode(std::function<void()> sendCallback)
     // NS_LOG_UNCOND("have " << m_totalNodes << " nodes registered");
 }
 
-void BulkSendSyncManager::NotifyCompletion()
+void BulkSendSyncManager::NotifyCompletion(u_int32_t node)
 {
     m_completedNodes++;
     NS_LOG_INFO("Bulk send completed by a node. Total completed: " << m_completedNodes << "/" << m_totalNodes);
-    NS_LOG_UNCOND("Bulk send completed by a node. Total completed: " << m_completedNodes << "/" << m_totalNodes);
+    NS_LOG_UNCOND("Bulk send completed by node: " << node << ". Total completed: " << m_completedNodes << "/" << m_totalNodes);
     if (m_completedNodes >= m_totalNodes)
     {
         NS_LOG_INFO("All nodes have completed the current bulk send round. Initiating next round.");

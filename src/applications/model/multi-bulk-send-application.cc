@@ -12,7 +12,7 @@ NS_OBJECT_ENSURE_REGISTERED(MultiBulkSendApplication);
 void
 MultiBulkSendApplication::PacketSentCallback(Ptr<const Packet> packet)
 {
-    NS_LOG_UNCOND("Packet sent at " << Simulator::Now().GetSeconds() << "s, Size: " << packet->GetSize() << " bytes. From Node: " << m_node->GetId());
+    // NS_LOG_UNCOND("Packet sent at " << Simulator::Now().GetSeconds() << "s, Size: " << packet->GetSize() << " bytes. From Node: " << m_node->GetId());
     // packet->GetSize() << " bytes. From Node: " << m_node->GetId());
 }
 
@@ -21,11 +21,11 @@ MultiBulkSendApplication::PacketRecievedCallback(Ptr<const Packet> packet, const
 {
     // NS_LOG_UNCOND("Packet received: " << packet->GetSize() << " bytes. Sent from Node" <<
     // m_node->GetId());
-    NS_LOG_UNCOND("Packet received: " << packet->GetSize() << " bytes");
+    // NS_LOG_UNCOND("Packet received: " << packet->GetSize() << " bytes");
     m_totalBytesReceived += packet->GetSize();
     if (m_totalBytesReceived >= m_bulkSendSize)
     {
-        BulkSendSyncManager::GetInstance().NotifyCompletion();
+        BulkSendSyncManager::GetInstance().NotifyCompletion(m_node->GetId());
         NS_LOG_UNCOND("mbulksendSize: " << m_bulkSendSize);
         NS_LOG_UNCOND("Bulk send complete for step "
                       << m_currentBulkSendIndex << " and from node " << m_node->GetId()
@@ -163,7 +163,7 @@ MultiBulkSendApplication::ScheduleNextBulkSend()
         {
             NS_LOG_UNCOND("No bulk send scheduled for step " << m_currentBulkSendIndex << "on Node " << m_node->GetId());
             // m_currentBulkSendIndex++;
-            BulkSendSyncManager::GetInstance().NotifyCompletion();
+            BulkSendSyncManager::GetInstance().NotifyCompletion(m_node->GetId());
         }
 
     }

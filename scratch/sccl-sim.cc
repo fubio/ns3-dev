@@ -33,7 +33,7 @@ main(int argc, char* argv[])
     cmd.AddValue("delta", "propogation delay across each channel", delay);
     cmd.Parse(argc, argv);
     // read in the json file
-    std::ifstream f("scratch/test.json", std::ifstream::in);
+    std::ifstream f("scratch/Broadcast.json", std::ifstream::in);
     if (!f.is_open())
     {
         std::cerr << "Failed to open test.json" << std::endl;

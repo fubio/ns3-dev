@@ -14,7 +14,7 @@ public:
     void SetRounds(std::vector<u_int32_t> rounds);
     void RegisterNode(std::function<void()> sendCallback);
     void SetTotalNodes(uint32_t total);
-    void NotifyCompletion();
+    void NotifyCompletion(uint32_t node);
 
 private:
     BulkSendSyncManager();
