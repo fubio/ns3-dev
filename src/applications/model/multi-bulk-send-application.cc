@@ -19,18 +19,18 @@ MultiBulkSendApplication::PacketSentCallback(Ptr<const Packet> packet)
 void
 MultiBulkSendApplication::PacketRecievedCallback(Ptr<const Packet> packet, const Address& address)
 {
-    // NS_LOG_UNCOND("Packet received: " << packet->GetSize() << " bytes. Sent from Node" <<
+    // NS_LOG_UNCOND("Packet received at: " << Simulator::Now().GetSeconds() << "packet size: " << packet->GetSize() << " bytes. Sent from Node" <<
     // m_node->GetId());
     // NS_LOG_UNCOND("Packet received: " << packet->GetSize() << " bytes");
     m_totalBytesReceived += packet->GetSize();
     if (m_totalBytesReceived >= m_bulkSendSize)
     {
         BulkSendSyncManager::GetInstance().NotifyCompletion(m_node->GetId());
-        NS_LOG_UNCOND("mbulksendSize: " << m_bulkSendSize);
+        // NS_LOG_UNCOND("mbulksendSize: " << m_bulkSendSize);
         NS_LOG_UNCOND("Bulk send complete for step "
-                      << m_currentBulkSendIndex << " and from node " << m_node->GetId()
+                      <<(m_currentBulkSendIndex - 1) << " and from node " << m_node->GetId()
                       << ". Total bytes received: " << m_totalBytesReceived << " at time "
-                      << Simulator::Now().GetSeconds());
+                      << Simulator::Now().GetSeconds() <<  " requested size: " << m_bulkSendSize);
     }
 
 }
@@ -109,7 +109,7 @@ MultiBulkSendApplication::ScheduleNextBulkSend()
         // Destructure into temporary local variables with different names
         auto bulkSends = m_bulkSends[m_currentBulkSendIndex];
         bool bulkSendScheduled = false;
-        for (int i = 0; i < 2; i++)
+        for (int i = 0; i < bulkSends.size(); i++)
         {
             
             auto [bulkSendApp, tempBulkSendSize, tempSink, destNode] = bulkSends[i];
@@ -117,7 +117,7 @@ MultiBulkSendApplication::ScheduleNextBulkSend()
         }
         std::cout <<"Node: " << m_node->GetId() <<  " m_bulkSendSize: " << m_bulkSendSize << std::endl;
 
-        for (int i = 0; i < 2; i++)
+        for (int i = 0; i < bulkSends.size(); i++)
         {
             
             auto [bulkSendApp, tempBulkSendSize, tempSink, destNode] = bulkSends[i];
@@ -131,7 +131,7 @@ MultiBulkSendApplication::ScheduleNextBulkSend()
 
             if (m_bulkSendSize == 0)
             {
-                // NS_LOG_UNCOND("Bulk send size is 0. Skipping.");
+                NS_LOG_UNCOND("Bulk send size is 0. Skipping.\n");
                 // BulkSendSyncManager::GetInstance().NotifyCompletion();
             }
             if (tempBulkSendSize > 0)
@@ -140,7 +140,7 @@ MultiBulkSendApplication::ScheduleNextBulkSend()
                  NS_LOG_UNCOND("Starting bulk send #"
                           << m_currentBulkSendIndex << " at time " << Simulator::Now().GetSeconds()
                           << " of size " << tempBulkSendSize
-                          << " bytes. From Node: " << m_node->GetId() << " to Node: " << tempSink->GetNode()->GetId());
+                          << " bytes. From Node: " << m_node->GetId() << " to Node: " << tempSink->GetNode()->GetId() << "\n");
                 bulkSendApp->TraceConnectWithoutContext(
                     "Tx",
                     MakeCallback(&MultiBulkSendApplication::PacketSentCallback, this));
@@ -149,19 +149,19 @@ MultiBulkSendApplication::ScheduleNextBulkSend()
                 tempSink->TraceConnectWithoutContext(
                     "Rx",
                     MakeCallback(&MultiBulkSendApplication::PacketRecievedCallback, this));
-                NS_LOG_UNCOND("Setting up bulk send at time " << Simulator::Now().GetSeconds());
+                // NS_LOG_UNCOND("Setting up bulk send at time " << Simulator::Now().GetSeconds());
                 bulkSendApp->SetStartTime(Simulator::Now());
                 bulkSendApp->SetStopTime(Simulator::Now() + Seconds(10));
                 tempSink->SetStartTime(Simulator::Now());
                 tempSink->SetStopTime(Simulator::Now() + Seconds(10));
-                NS_LOG_UNCOND("finished setting up bulk send #" << m_currentBulkSendIndex
-                                                                << " with sink on "
-                                                                << tempSink->GetNode()->GetId() << " which we know is on Node: " << destNode);
+                // NS_LOG_UNCOND("finished setting up bulk send #" << m_currentBulkSendIndex
+                                                                // << " with sink on "
+                                                                // << tempSink->GetNode()->GetId() << " which we know is on Node: " << destNode);
             }
         }
         if (!bulkSendScheduled)
         {
-            NS_LOG_UNCOND("No bulk send scheduled for step " << m_currentBulkSendIndex << "on Node " << m_node->GetId());
+            NS_LOG_UNCOND("No bulk send scheduled for step " << m_currentBulkSendIndex << " on Node " << m_node->GetId() << "\n");
             // m_currentBulkSendIndex++;
             BulkSendSyncManager::GetInstance().NotifyCompletion(m_node->GetId());
         }

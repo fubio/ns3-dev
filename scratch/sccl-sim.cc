@@ -23,18 +23,18 @@ Ipv4InterfaceContainer interfaces;
 int
 main(int argc, char* argv[])
 {
-    const int maxLinksPerNodes = 10;
     const int maxNodes = 100;
-    const int maxSteps = 50;
-    const int maxSendsPerStep = 100;
     std::string dataRate = "500Kbps";
     std::string delay = "5ms";
+    u_int32_t chuncks = 1;
     uint32_t dataSize = 62500;
     CommandLine cmd(__FILE__);
+    cmd.AddValue("chuncks", "Number of chuncks to send", chuncks);
     cmd.AddValue("dataSize", "Total number of bytes for application to send", dataSize);
     cmd.AddValue("dataRate", "Rate a which data can be sent across each channel", dataRate);
-    cmd.AddValue("delta", "propogation delay across each channel", delay);
+    cmd.AddValue("delay", "propogation delay across each channel", delay);
     cmd.Parse(argc, argv);
+    dataSize = dataSize / chuncks;
     // read in the json file
     std::ifstream f("scratch/Broadcast.json", std::ifstream::in);
     if (!f.is_open())
@@ -79,28 +79,28 @@ main(int argc, char* argv[])
     Ipv4AddressHelper ipv4;
     ipv4.SetBase("10.1.1.0", "255.255.255.0");
 
-    // for each i,j and direction in topology, create a point to point link (unidirectional) between
-    // nodes i and j we have two links for each pair of nodes which creates a bidirectional link
-    std::tuple<NetDeviceContainer, Ipv4InterfaceContainer> devicesArr[maxNodes][maxNodes]
-                                                                     [maxLinksPerNodes];
+    // // for each i,j and direction in topology, create a point to point link (unidirectional) between
+    // // nodes i and j we have two links for each pair of nodes which creates a bidirectional link
+    // std::tuple<NetDeviceContainer, Ipv4InterfaceContainer> devicesArr[maxNodes][maxNodes]
+    //                                                                  [maxLinksPerNodes];
     std::cout << numNodes << std::endl;
-    int i = 0;
-    for (auto top : topology)
-    {
-        int j = 0;
-        for (int numConnection : top)
-        {
-            for (int k = 0; k < numConnection; k++)
-            {
-                auto devices = pointToPoint.Install(nodes.Get(i), nodes.Get(j));
-                interfaces = ipv4.Assign(devices);
-                devicesArr[i][j][k] = std::make_tuple(devices, interfaces);
-                ipv4.NewNetwork();
-            }
-            j++;
-        }
-        i++;
-    }
+    // int i = 0;
+    // for (auto top : topology)
+    // {
+    //     int j = 0;
+    //     for (int numConnection : top)
+    //     {
+    //         for (int k = 0; k < numConnection; k++)
+    //         {
+    //             auto devices = pointToPoint.Install(nodes.Get(i), nodes.Get(j));
+    //             interfaces = ipv4.Assign(devices);
+    //             devicesArr[i][j][k] = std::make_tuple(devices, interfaces);
+    //             ipv4.NewNetwork();
+    //         }
+    //         j++;
+    //     }
+    //     i++;
+    // }
     uint16_t port = 1;
     // Create Applications TODO look into rounds
     int stepNum = 0;
@@ -179,7 +179,10 @@ main(int argc, char* argv[])
                         continue;
                     }
                     // std::cout << " getting src: " << src << " dest " << dest << " i/k " << i <<" sending bytes: " <<dataToSend[i] << std::endl;
-                    auto [devices, interfaces] = devicesArr[src][dest][i];
+                    auto devices = pointToPoint.Install(nodes.Get(src), nodes.Get(dest));
+                    interfaces = ipv4.Assign(devices);
+                    ipv4.NewNetwork();
+                    // auto [devices, interfaces] = devicesArr[src][dest][i];
                     BulkSendHelper source("ns3::TcpSocketFactory",
                                           InetSocketAddress(interfaces.GetAddress(1), port));
                     ApplicationContainer sourceApps = source.Install(nodes.Get(src));
