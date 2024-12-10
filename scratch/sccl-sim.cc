@@ -23,11 +23,13 @@ Ipv4InterfaceContainer interfaces;
 int
 main(int argc, char* argv[])
 {
+    Config::SetDefault("ns3::TcpSocket::RcvBufSize", UintegerValue(1 << 30)); // 1 MB
+Config::SetDefault("ns3::TcpSocket::SndBufSize", UintegerValue(1 << 30)); // 1 MB
     const int maxNodes = 100;
-    std::string dataRate = "500Kbps";
+    std::string dataRate = "200Gbps";
     std::string delay = "5ms";
     u_int32_t chuncks = 1;
-    uint32_t dataSize = 62500;
+    uint32_t dataSize = 625000;
     CommandLine cmd(__FILE__);
     cmd.AddValue("chuncks", "Number of chuncks to send", chuncks);
     cmd.AddValue("dataSize", "Total number of bytes for application to send", dataSize);
@@ -36,7 +38,7 @@ main(int argc, char* argv[])
     cmd.Parse(argc, argv);
     dataSize = dataSize / chuncks;
     // read in the json file
-    std::ifstream f("scratch/Broadcast.json", std::ifstream::in);
+    std::ifstream f("scratch/Allgather.n8-DGX1-steps7.rounds7.chunks6.msccl.json", std::ifstream::in);
     if (!f.is_open())
     {
         std::cerr << "Failed to open test.json" << std::endl;
@@ -63,7 +65,7 @@ main(int argc, char* argv[])
     for (int i = 0; i < numNodes; i++) {
         applicationArr[i].resize(steps.size());
     }
-    std::cout << "Topology name: " << topologyName << std::endl;
+    // std::cout << "Topology name: " << topologyName << std::endl;
     // Create point-to-point link
     PointToPointHelper pointToPoint;
     pointToPoint.SetDeviceAttribute("DataRate", StringValue(dataRate));
@@ -83,7 +85,7 @@ main(int argc, char* argv[])
     // // nodes i and j we have two links for each pair of nodes which creates a bidirectional link
     // std::tuple<NetDeviceContainer, Ipv4InterfaceContainer> devicesArr[maxNodes][maxNodes]
     //                                                                  [maxLinksPerNodes];
-    std::cout << numNodes << std::endl;
+    // std::cout << numNodes << std::endl;
     // int i = 0;
     // for (auto top : topology)
     // {
@@ -223,14 +225,14 @@ main(int argc, char* argv[])
             multiBulkSendAppNode->SetStopTime(Seconds(10.0));
     }
 
-    for (int k = 0; k < applicationArr.size(); k++) {
-        for (int j = 0;j < applicationArr[k].size(); j++) {
-            for(int i = 0; i < applicationArr[k][j].size(); i++) {
-                auto [bulkSendApp, tempBulkSendSize, tempSink, destNode] = applicationArr[k][j][i];
-                std::cout <<  "src: " << k << " bulkSendSize: " << tempBulkSendSize << " step: " << j << " send: " << i << " destNode: " << destNode << std::endl;
-            }
-        }
-    }
+    // for (int k = 0; k < applicationArr.size(); k++) {
+    //     for (int j = 0;j < applicationArr[k].size(); j++) {
+    //         for(int i = 0; i < applicationArr[k][j].size(); i++) {
+    //             auto [bulkSendApp, tempBulkSendSize, tempSink, destNode] = applicationArr[k][j][i];
+    //             std::cout <<  "src: " << k << " bulkSendSize: " << tempBulkSendSize << " step: " << j << " send: " << i << " destNode: " << destNode << std::endl;
+    //         }
+    //     }
+    // }
     Simulator::Stop(Seconds(20)); // Extend simulation time
     Simulator::Run();
     Simulator::Destroy();

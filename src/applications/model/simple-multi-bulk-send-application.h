@@ -26,37 +26,38 @@ In BulkSendApplication the only functions we can call are as follows
 #include "ns3/uinteger.h"
 #include "ns3/bulk-send-sync-manager.h"
 #include "ns3/packet-sink.h"
+#include "ns3/net-device-container.h"
 
 #include <vector>
 
 namespace ns3
 {
 
-class MultiBulkSendApplication : public Application
+class SimpleMultiBulkSendApplication : public Application
 {
   public:
     static TypeId GetTypeId();
 
-    MultiBulkSendApplication();
-    virtual ~MultiBulkSendApplication();
+    SimpleMultiBulkSendApplication();
+    virtual ~SimpleMultiBulkSendApplication();
 
-    void SetBulkSendSizes(const std::vector<std::vector<std::tuple<Ptr<BulkSendApplication>, uint64_t, Ptr<PacketSink>, uint64_t>>>& bulkSends);
-    void SetSteps(uint64_t steps);
+    void SetBulkSendSizes(const std::vector<std::tuple<Ptr<BulkSendApplication>, uint64_t, Ptr<PacketSink>, NetDeviceContainer>>& bulkSends);
+
   private:
     void PacketSentCallback(Ptr<const Packet> packet);
     void PacketRecievedCallback(Ptr<const Packet> packet, const Address& address);
+    // void PacketRecievedCallback(Ptr<const Packet> packet);
     void StartApplication() override;
     void StopApplication() override;
     void ScheduleNextBulkSend();
     //each elment in the vector is a step, in each bucket we have the size of the bulksend and the bulksend application
-    std::vector<std::vector<std::tuple<Ptr<BulkSendApplication>, uint64_t, Ptr<PacketSink>, u_int64_t>>> m_bulkSends;
+    std::vector<std::tuple<Ptr<BulkSendApplication>, uint64_t, Ptr<PacketSink>, NetDeviceContainer>> m_bulkSendSizes;
     size_t m_currentBulkSendIndex;
     uint64_t m_totalBytesReceived;
-    uint64_t m_bulkSendSize;
-    uint64_t m_steps;
     uint64_t m_packetsSent;
     uint64_t m_packetsReceived;
-    std::vector<Ptr<PacketSink>> m_sink;
+    uint64_t m_bulkSendSize;
+    Ptr<PacketSink> m_sink;
 };
 
 } // namespace ns3
