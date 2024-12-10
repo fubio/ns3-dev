@@ -2,12 +2,12 @@ import matplotlib.pyplot as plt
 import numpy as np
 import os
 file_paths = [
-    "allgather_results/Allgather.n8-DGX1-steps7.chunks6.msccl_results.csv",
-    "allgather_results/Allgather.n8-DGX1-steps2.rounds2.chuncks1.msccl_results.csv",
-    "allgather_results/Allgather.n8-DGX1-steps3.rounds3.chunks2.msccl_results.csv",
-    "allgather_results/Allgather.n8-DGX1-steps4.rounds4.chunks3.msccl_results.csv",
-    "allgather_results/Allgather.n8-DGX1-steps5.rounds5.chunks4.msccl_results.csv",
-    "allgather_results/Allgather.n8-DGX1-steps6.rounds6.chunks5.msccl_results.csv"
+    "allgather_results/(1, 2, 2)",
+    "allgather_results/(2, 3, 3)",
+    "allgather_results/(3, 4, 4)",
+    "allgather_results/(4, 5, 5)",
+    "allgather_results/(5, 6, 6)",
+    "allgather_results/(6, 7, 7)"
 ] 
 
 def plot_multiple_files(file_paths):
@@ -44,10 +44,10 @@ def plot_multiple_files(file_paths):
     plt.ylabel("Average Latency (ms)", fontsize=16, fontweight='bold')
 
     # Set custom ticks for the y-axis (log scale)
-    plt.yticks([0.01, 0.1, 1, 10, 100], ["0.01", "0.1", "1", "10", "100"], fontsize=14)
+    plt.yticks([0.01, 0.1, 1], ["0.01", "0.1", "1"], fontsize=14)
 
     # Set custom ticks for the x-axis (log scale)
-    powers_of_two = [0.75, 12, 192, 3072, 49152, 786432]
+    powers_of_two = [0.75, 12, 192, 3072, 49152]
     plt.xticks(powers_of_two, [str(int(x)) for x in powers_of_two], fontsize=14)
 
     # Add a grid with both major and minor ticks
